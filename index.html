@@ -1,0 +1,147 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Advanced Budget Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 2rem;
+    }
+    th, td {
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background-color: #007acc;
+      color: white;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 0.4rem;
+    }
+    .summary {
+      font-weight: bold;
+    }
+    .controls {
+      margin-bottom: 1rem;
+    }
+    .controls button {
+      margin-right: 1rem;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Advanced Budget Tracker</h1>
+
+  <div class="controls">
+    <label for="month">Month:</label>
+    <input type="month" id="month" />
+    <button onclick="loadBudget()">Load</button>
+    <button onclick="saveBudget()">Save</button>
+    <button onclick="downloadExcel()">Export Excel</button>
+  </div>
+
+  <table id="budgetTable">
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Amount ($)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Gym</td><td><input type="number" value="100" /></td></tr>
+      <tr><td>Bell phone bill</td><td><input type="number" value="40" /></td></tr>
+      <tr><td>Music vocal lesson</td><td><input type="number" value="140" /></td></tr>
+      <tr><td>Karate</td><td><input type="number" value="80" /></td></tr>
+      <tr><td>Offering</td><td><input type="number" value="240" /></td></tr>
+      <tr><td>Misc giving</td><td><input type="number" value="100" /></td></tr>
+      <tr><td>Mum</td><td><input type="number" value="400" /></td></tr>
+      <tr><td>Dad</td><td><input type="number" value="300" /></td></tr>
+      <tr><td>Sis</td><td><input type="number" value="100" /></td></tr>
+      <tr><td>Car maintenance</td><td><input type="number" value="50" /></td></tr>
+      <tr><td>Eat out/takeout</td><td><input type="number" value="100" /></td></tr>
+      <tr><td>Float</td><td><input type="number" value="100" /></td></tr>
+      <tr><td>Spotify</td><td><input type="number" value="10" /></td></tr>
+      <tr><td>Grocery bill</td><td><input type="number" value="100" /></td></tr>
+    </tbody>
+    <tfoot>
+      <tr class="summary"><td>Total</td><td id="totalCell">$0</td></tr>
+    </tfoot>
+  </table>
+
+  <script>
+    function calculateTotal() {
+      const inputs = document.querySelectorAll('#budgetTable tbody input');
+      let total = 0;
+      inputs.forEach(input => total += Number(input.value));
+      document.getElementById('totalCell').innerText = `$${total.toFixed(2)}`;
+    }
+
+    function downloadExcel() {
+      const rows = [['Item', 'Amount']];
+      document.querySelectorAll('#budgetTable tbody tr').forEach(row => {
+        const item = row.cells[0].innerText;
+        const amount = row.querySelector('input').value;
+        rows.push([item, amount]);
+      });
+
+      let csvContent = 'data:text/csv;charset=utf-8,' + rows.map(e => e.join(',')).join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', 'budget.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function saveBudget() {
+      const month = document.getElementById('month').value;
+      if (!month) return alert('Select a month first!');
+      const data = {};
+      document.querySelectorAll('#budgetTable tbody tr').forEach(row => {
+        const item = row.cells[0].innerText;
+        const amount = row.querySelector('input').value;
+        data[item] = amount;
+      });
+      localStorage.setItem(`budget-${month}`, JSON.stringify(data));
+      alert('Budget saved!');
+    }
+
+    function loadBudget() {
+      const month = document.getElementById('month').value;
+      if (!month) return alert('Select a month first!');
+      const data = JSON.parse(localStorage.getItem(`budget-${month}`));
+      if (!data) return alert('No data for this month.');
+      document.querySelectorAll('#budgetTable tbody tr').forEach(row => {
+        const item = row.cells[0].innerText;
+        if (data[item] !== undefined) {
+          row.querySelector('input').value = data[item];
+        }
+      });
+      calculateTotal();
+    }
+
+    document.querySelectorAll('#budgetTable input').forEach(input => {
+      input.addEventListener('input', calculateTotal);
+    });
+    window.addEventListener('load', calculateTotal);
+  </script>
+</body>
+</html>
